@@ -1,0 +1,16 @@
+{
+    "name": "柚子星程",
+    "short_name": "柚子星程",
+    "description": "老婆的专属日常任务清单",
+    "start_url": "./",
+    "display": "standalone",
+    "background_color": "#f5f5f4",
+    "theme_color": "#f43f5e",
+    "icons": [
+        {
+            "src": "tubiao.png",
+            "sizes": "any",
+            "type": "image/png"
+        }
+    ]
+}

@@ -16,6 +16,7 @@
     <link rel="apple-touch-icon" href="tubiao.png">
     <link rel="icon" type="image/png" href="tubiao.png">
     <meta name="theme-color" content="#f43f5e">
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @keyframes bounce {
@@ -51,6 +52,39 @@
             return `${y}-${m}-${d}`;
         }
         
+        function formatMonthKey(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            return `${y}-${m}`;
+        }
+        
+        function calculateMonthStats(date, data) {
+            const monthKey = formatMonthKey(date);
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            let napCount = 0;
+            let afterSchoolCount = 0;
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayDate = new Date(year, month, day);
+                const dayStr = formatDate(dayDate);
+                const dayData = data[dayStr];
+                
+                if (dayData) {
+                    if (dayData.hasNapWatch && dayData.tasks?.nap_watch) {
+                        napCount++;
+                    }
+                    if (dayData.hasAfterSchool && dayData.tasks?.after_school) {
+                        afterSchoolCount++;
+                    }
+                }
+            }
+            
+            return { napCount, afterSchoolCount };
+        }
+        
         let appData = loadData();
         let selectedDate = new Date();
         let showCalendar = false;
@@ -59,7 +93,7 @@
         
         const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
         
-        function getSections(dateStr, isRaining) {
+        function getSections(dateStr, isRaining, dayData) {
             const date = new Date(dateStr);
             const currentDay = date.getDay();
             const sections = [];
@@ -79,23 +113,42 @@
             if (currentDay === 2 || currentDay === 4) {
                 schoolItems.push({ id: 'morning_read', text: '早起早读' });
             }
-            if (currentDay === 2 || currentDay === 3) {
-                schoolItems.push({ id: 'nap_watch', text: '固定看午睡' });
-            }
-            if (currentDay === 1 || currentDay === 3 || (currentDay === 2 && isRaining)) {
-                schoolItems.push({ id: 'after_school', text: '延时服务' });
+            
+            let hasNapWatch;
+            if (dayData?.hasNapWatch === false) {
+                hasNapWatch = false;
+            } else if (dayData?.hasNapWatch === true) {
+                hasNapWatch = true;
+            } else {
+                hasNapWatch = (currentDay === 2 || currentDay === 3);
             }
             
-            if (schoolItems.length > 0 || currentDay === 2) {
-                sections.push({
-                    id: 'school',
-                    title: '学校教务',
-                    color: 'bg-blue-50',
-                    textColor: 'text-blue-800',
-                    showRainToggle: currentDay === 2,
-                    items: schoolItems
-                });
+            let hasAfterSchool;
+            if (dayData?.hasAfterSchool === false) {
+                hasAfterSchool = false;
+            } else if (dayData?.hasAfterSchool === true) {
+                hasAfterSchool = true;
+            } else {
+                hasAfterSchool = (currentDay === 1 || currentDay === 3 || (currentDay === 2 && isRaining));
             }
+            
+            if (hasNapWatch) {
+                schoolItems.push({ id: 'nap_watch', text: '看午睡', removable: true });
+            }
+            if (hasAfterSchool) {
+                schoolItems.push({ id: 'after_school', text: '延时服务', removable: true });
+            }
+            
+            sections.push({
+                id: 'school',
+                title: '学校教务',
+                color: 'bg-blue-50',
+                textColor: 'text-blue-800',
+                showRainToggle: currentDay === 2,
+                showAddNap: !hasNapWatch,
+                showAddAfterSchool: !hasAfterSchool,
+                items: schoolItems
+            });
             
             sections.push({
                 id: 'youzi',
@@ -120,7 +173,9 @@
             const dayData = appData[dateStr] || { tasks: {}, isRaining: false };
             const tasks = dayData.tasks || {};
             const isRaining = dayData.isRaining || false;
-            const sections = getSections(dateStr, isRaining);
+            const sections = getSections(dateStr, isRaining, dayData);
+            
+            const stats = calculateMonthStats(selectedDate, appData);
             
             const allCurrentTasks = sections.flatMap(s => s.items);
             const totalTasksCount = allCurrentTasks.length;
@@ -163,7 +218,7 @@
                     </button>
                 </div>
                 
-                <div class="relative pt-1">
+                <div class="relative pt-1 mb-2">
                     <div class="flex mb-2 items-center justify-between">
                         <div class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full ${isToday ? 'text-rose-600 bg-rose-100' : 'text-stone-500 bg-stone-200'}">
                             ${isToday ? '今日进度' : '当日进度'}
@@ -176,6 +231,20 @@
                     </div>
                     <div class="overflow-hidden h-2 mb-2 text-xs flex rounded-full bg-stone-100">
                         <div style="width: ${progressPercent}%" class="h-full ${progressPercent === 100 ? 'bg-green-400' : (isToday ? 'bg-rose-400' : 'bg-stone-400')}"></div>
+                    </div>
+                </div>
+                
+                <div class="bg-purple-50 rounded-2xl p-3 border border-purple-100">
+                    <div class="text-xs font-bold text-purple-800 mb-2">本月统计</div>
+                    <div class="flex gap-4 text-sm">
+                        <div class="flex-1">
+                            <span class="text-purple-600">看午睡: </span>
+                            <span class="font-bold text-purple-800">${stats.napCount}次</span>
+                        </div>
+                        <div class="flex-1">
+                            <span class="text-purple-600">延时课: </span>
+                            <span class="font-bold text-purple-800">${stats.afterSchoolCount}次</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -263,12 +332,51 @@
                 `;
                 }
                 
-                if (section.items.length === 0) {
+                if (section.showAddNap) {
+                    itemsHtml += `
+                <li>
+                    <button onclick="addNapWatch()" class="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-2xl border-2 border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 transition-colors">
+                        <span>+ 添加看午睡</span>
+                    </button>
+                </li>
+                `;
+                }
+                
+                if (section.showAddAfterSchool) {
+                    itemsHtml += `
+                <li>
+                    <button onclick="addAfterSchool()" class="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-2xl border-2 border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 transition-colors">
+                        <span>+ 添加延时服务</span>
+                    </button>
+                </li>
+                `;
+                }
+                
+                if (section.items.length === 0 && !section.showAddNap && !section.showAddAfterSchool) {
                     itemsHtml += '<li class="p-4 text-center text-stone-400 text-sm font-medium">这一天该板块没有任务哦～</li>';
                 } else {
                     section.items.forEach(item => {
                         const isCompleted = !!tasks[item.id];
-                        itemsHtml += `
+                        if (item.removable) {
+                            itemsHtml += `
+                        <li class="relative">
+                            <button onclick="toggleTask('${item.id}')" class="w-full flex items-center gap-3.5 px-3 py-3.5 rounded-2xl text-left hover:bg-stone-50 ${isCompleted ? 'opacity-60 bg-stone-50' : ''}">
+                                <div class="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${isCompleted ? 'bg-rose-500 text-white' : 'border-2 border-stone-300'}">
+                                    ${isCompleted ? '✓' : ''}
+                                </div>
+                                <span class="flex-1 text-[14.5px] ${isCompleted ? 'text-stone-400 line-through' : 'text-stone-700 font-semibold'}">
+                                    ${item.text}
+                                </span>
+                            </button>
+                            <button onclick="removeTask('${item.id}')" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-red-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </li>
+                        `;
+                        } else {
+                            itemsHtml += `
                         <li>
                             <button onclick="toggleTask('${item.id}')" class="w-full flex items-center gap-3.5 px-3 py-3.5 rounded-2xl text-left hover:bg-stone-50 ${isCompleted ? 'opacity-60 bg-stone-50' : ''}">
                                 <div class="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${isCompleted ? 'bg-rose-500 text-white' : 'border-2 border-stone-300'}">
@@ -280,6 +388,7 @@
                             </button>
                         </li>
                         `;
+                        }
                     });
                 }
                 
@@ -340,7 +449,7 @@
             const isCurrentlyCompleted = dayData.tasks[taskId];
             const newTasks = { ...dayData.tasks, [taskId]: !isCurrentlyCompleted };
             
-            const sections = getSections(dateStr, dayData.isRaining || false);
+            const sections = getSections(dateStr, dayData.isRaining || false, dayData);
             const allCurrentTasks = sections.flatMap(s => s.items);
             const newCompletedCount = allCurrentTasks.filter(t => newTasks[t.id]).length;
             
@@ -361,6 +470,40 @@
             const dateStr = formatDate(selectedDate);
             const dayData = appData[dateStr] || { tasks: {}, isRaining: false };
             appData[dateStr] = { ...dayData, isRaining: !dayData.isRaining };
+            saveData(appData);
+            render();
+        };
+        
+        window.addNapWatch = function() {
+            const dateStr = formatDate(selectedDate);
+            const dayData = appData[dateStr] || { tasks: {}, isRaining: false };
+            appData[dateStr] = { ...dayData, hasNapWatch: true };
+            saveData(appData);
+            render();
+        };
+        
+        window.addAfterSchool = function() {
+            const dateStr = formatDate(selectedDate);
+            const dayData = appData[dateStr] || { tasks: {}, isRaining: false };
+            appData[dateStr] = { ...dayData, hasAfterSchool: true };
+            saveData(appData);
+            render();
+        };
+        
+        window.removeTask = function(taskId) {
+            const dateStr = formatDate(selectedDate);
+            const dayData = appData[dateStr] || { tasks: {}, isRaining: false };
+            const newTasks = { ...dayData.tasks };
+            delete newTasks[taskId];
+            
+            if (taskId === 'nap_watch') {
+                appData[dateStr] = { ...dayData, tasks: newTasks, hasNapWatch: false };
+            } else if (taskId === 'after_school') {
+                appData[dateStr] = { ...dayData, tasks: newTasks, hasAfterSchool: false };
+            } else {
+                appData[dateStr] = { ...dayData, tasks: newTasks };
+            }
+            
             saveData(appData);
             render();
         };
