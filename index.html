@@ -71,14 +71,32 @@
                 const dayDate = new Date(year, month, day);
                 const dayStr = formatDate(dayDate);
                 const dayData = data[dayStr];
+                const currentDay = dayDate.getDay();
+                const isRaining = dayData?.isRaining || false;
                 
-                if (dayData) {
-                    if (dayData.hasNapWatch && dayData.tasks?.nap_watch) {
-                        napCount++;
-                    }
-                    if (dayData.hasAfterSchool && dayData.tasks?.after_school) {
-                        afterSchoolCount++;
-                    }
+                let hasNapWatch;
+                if (dayData?.hasNapWatch === false) {
+                    hasNapWatch = false;
+                } else if (dayData?.hasNapWatch === true) {
+                    hasNapWatch = true;
+                } else {
+                    hasNapWatch = (currentDay === 2 || currentDay === 3);
+                }
+                
+                let hasAfterSchool;
+                if (dayData?.hasAfterSchool === false) {
+                    hasAfterSchool = false;
+                } else if (dayData?.hasAfterSchool === true) {
+                    hasAfterSchool = true;
+                } else {
+                    hasAfterSchool = (currentDay === 1 || currentDay === 3 || (currentDay === 2 && isRaining));
+                }
+                
+                if (hasNapWatch && dayData?.tasks?.nap_watch) {
+                    napCount++;
+                }
+                if (hasAfterSchool && dayData?.tasks?.after_school) {
+                    afterSchoolCount++;
                 }
             }
             
