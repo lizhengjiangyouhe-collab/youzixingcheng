@@ -5,11 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>柚子星程</title>
     
-    <!-- 防缓存设置 -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="柚子星程">
@@ -17,32 +12,768 @@
     <link rel="icon" type="image/png" href="tubiao.png">
     <meta name="theme-color" content="#f43f5e">
     <link rel="manifest" href="manifest.json">
-    <script src="https://cdn.tailwindcss.com"></script>
+    
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #f5f5f4;
+            color: #292524;
+            padding-bottom: 40px;
+        }
+        
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
         }
-        .animate-bounce { animation: bounce 1s infinite; }
+        
+        .animate-bounce {
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes zoomIn {
+            from { transform: scale(0.95); }
+            to { transform: scale(1); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.2s ease-out;
+        }
+        
+        .zoom-in {
+            animation: zoomIn 0.2s ease-out;
+        }
+        
+        .header {
+            background: white;
+            padding: 32px 20px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-radius: 0 0 24px 24px;
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .header-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #292524;
+        }
+        
+        .btn-back-today {
+            font-size: 12px;
+            font-weight: 600;
+            color: #e11d48;
+            background: #fff1f2;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        
+        .btn-back-today:active {
+            transform: scale(0.95);
+        }
+        
+        .date-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f5f5f4;
+            border-radius: 16px;
+            padding: 4px;
+            margin-bottom: 16px;
+            border: 1px solid #e7e5e4;
+        }
+        
+        .date-btn {
+            padding: 8px 12px;
+            background: transparent;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            color: #a8a29e;
+            transition: all 0.2s;
+        }
+        
+        .date-btn:hover {
+            background: white;
+            color: #57534e;
+        }
+        
+        .date-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .date-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            padding: 4px 0;
+        }
+        
+        .date-btn-main {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: white;
+            border: 1px solid rgba(231, 229, 228, 0.6);
+            border-radius: 12px;
+            padding: 8px 16px;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+        
+        .date-btn-main:hover {
+            border-color: #d6d3d1;
+        }
+        
+        .date-btn-main:active {
+            transform: scale(0.98);
+        }
+        
+        .date-btn-main svg {
+            width: 16px;
+            height: 16px;
+            color: #e11d48;
+            opacity: 0.8;
+        }
+        
+        .date-text {
+            font-size: 14px;
+            font-weight: bold;
+            color: #44403c;
+        }
+        
+        .date-weekday {
+            font-size: 14px;
+            font-weight: bold;
+            color: #44403c;
+            border-left: 1px solid #e7e5e4;
+            padding-left: 6px;
+            margin-left: 6px;
+        }
+        
+        .progress-section {
+            position: relative;
+            padding-top: 4px;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .progress-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 4px 8px;
+            border-radius: 9999px;
+        }
+        
+        .progress-label-today {
+            color: #e11d48;
+            background: #fff1f2;
+        }
+        
+        .progress-label-other {
+            color: #78716c;
+            background: #e7e5e4;
+        }
+        
+        .progress-text {
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .progress-text-today {
+            color: #e11d48;
+        }
+        
+        .progress-text-other {
+            color: #78716c;
+        }
+        
+        .progress-bar-container {
+            overflow: hidden;
+            height: 8px;
+            margin-bottom: 8px;
+            border-radius: 9999px;
+            background: #e7e5e4;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            transition: width 0.5s ease-out;
+        }
+        
+        .progress-bar-done {
+            background: #4ade80;
+        }
+        
+        .progress-bar-today {
+            background: #fb7185;
+        }
+        
+        .progress-bar-other {
+            background: #a8a29e;
+        }
+        
+        .stats-card {
+            background: #faf5ff;
+            border-radius: 16px;
+            padding: 12px;
+            border: 1px solid #e9d5ff;
+        }
+        
+        .stats-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #581c87;
+            margin-bottom: 8px;
+        }
+        
+        .stats-row {
+            display: flex;
+            gap: 16px;
+            font-size: 14px;
+        }
+        
+        .stat-item {
+            flex: 1;
+        }
+        
+        .stat-label {
+            color: #9333ea;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #581c87;
+        }
+        
+        .main-content {
+            padding: 16px;
+            max-width: 448px;
+            margin: 4px auto 0;
+        }
+        
+        .section-card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: 1px solid rgba(231, 229, 228, 0.8);
+            margin-bottom: 20px;
+        }
+        
+        .section-header {
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+        }
+        
+        .section-header-daily {
+            background: #fffbeb;
+        }
+        
+        .section-header-school {
+            background: #eff6ff;
+        }
+        
+        .section-header-youzi {
+            background: #fff1f2;
+        }
+        
+        .section-icon {
+            width: 20px;
+            height: 20px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 8px;
+            padding: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .section-title-daily {
+            color: #78350f;
+        }
+        
+        .section-title-school {
+            color: #1e40af;
+        }
+        
+        .section-title-youzi {
+            color: #9f1239;
+        }
+        
+        .section-content {
+            padding: 8px;
+        }
+        
+        .rain-toggle {
+            margin: 8px;
+            padding: 12px;
+            background: rgba(239, 246, 255, 0.6);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid rgba(191, 219, 254, 0.5);
+        }
+        
+        .rain-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #1e40af;
+        }
+        
+        .rain-label svg {
+            width: 16px;
+            height: 16px;
+            opacity: 0.8;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            border-radius: 9999px;
+            transition: background 0.3s;
+            cursor: pointer;
+        }
+        
+        .toggle-on {
+            background: #3b82f6;
+        }
+        
+        .toggle-off {
+            background: #d6d3d1;
+        }
+        
+        .toggle-dot {
+            position: absolute;
+            top: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 9999px;
+            transition: transform 0.3s;
+        }
+        
+        .toggle-dot-on {
+            transform: translateX(22px);
+        }
+        
+        .toggle-dot-off {
+            transform: translateX(2px);
+        }
+        
+        .task-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .empty-message {
+            padding: 16px;
+            text-align: center;
+            color: #a8a29e;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .task-item {
+            position: relative;
+        }
+        
+        .task-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 12px;
+            border-radius: 16px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        
+        .task-btn:hover {
+            background: #f5f5f4;
+        }
+        
+        .task-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .task-btn.completed {
+            opacity: 0.6;
+            background: rgba(245, 245, 244, 0.5);
+        }
+        
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+        
+        .task-checkbox.unchecked {
+            border: 2px solid #d6d3d1;
+            color: transparent;
+        }
+        
+        .task-checkbox.checked {
+            background: #e11d48;
+            color: white;
+        }
+        
+        .task-text {
+            flex: 1;
+            font-size: 14.5px;
+            transition: all 0.3s;
+        }
+        
+        .task-text.completed {
+            color: #a8a29e;
+            text-decoration: line-through;
+            text-decoration-color: #d6d3d1;
+        }
+        
+        .task-text.uncompleted {
+            color: #44403c;
+            font-weight: 600;
+        }
+        
+        .task-remove-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 4px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #a8a29e;
+            transition: color 0.2s;
+            z-index: 2;
+        }
+        
+        .task-remove-btn:hover {
+            color: #ef4444;
+        }
+        
+        .task-remove-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .add-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            border-radius: 16px;
+            border: 2px dashed #93c5fd;
+            background: transparent;
+            color: #2563eb;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .add-btn:hover {
+            background: #eff6ff;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            padding: 16px;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            width: 100%;
+            max-width: 384px;
+            overflow: hidden;
+        }
+        
+        .calendar-header {
+            padding: 16px;
+            border-bottom: 1px solid #e7e5e4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(245, 245, 244, 0.5);
+        }
+        
+        .calendar-nav-btn {
+            padding: 8px;
+            border-radius: 9999px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #78716c;
+            transition: background 0.2s;
+        }
+        
+        .calendar-nav-btn:hover {
+            background: #e7e5e4;
+        }
+        
+        .calendar-nav-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .calendar-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #292524;
+        }
+        
+        .calendar-body {
+            padding: 16px;
+        }
+        
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+        
+        .calendar-weekday {
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #a8a29e;
+            padding: 4px 0;
+        }
+        
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        
+        .calendar-day {
+            padding: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 9999px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        
+        .calendar-day:hover:not(.empty):not(.selected):not(.today) {
+            background: #f5f5f4;
+            color: #44403c;
+        }
+        
+        .calendar-day.empty {
+            color: transparent;
+            cursor: default;
+        }
+        
+        .calendar-day.selected {
+            background: #e11d48;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .calendar-day.today {
+            background: #ffe4e6;
+            color: #e11d48;
+            font-weight: bold;
+        }
+        
+        .calendar-day.today.selected {
+            background: #e11d48;
+            color: white;
+        }
+        
+        .calendar-day-number {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+        }
+        
+        .calendar-footer {
+            padding: 12px;
+            border-top: 1px solid #e7e5e4;
+            background: rgba(245, 245, 244, 0.5);
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .cancel-btn {
+            padding: 8px 16px;
+            border-radius: 12px;
+            border: none;
+            background: transparent;
+            color: #78716c;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .cancel-btn:hover {
+            background: #e7e5e4;
+        }
+        
+        .celebration {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        
+        .celebration-content {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(4px);
+            padding: 16px 24px;
+            border-radius: 9999px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid rgba(251, 207, 232, 0.5);
+        }
+        
+        .celebration-text {
+            font-weight: bold;
+            color: #e11d48;
+        }
+        
+        .export-import-section {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e7e5e4;
+        }
+        
+        .export-btn, .import-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 16px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .export-btn {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .export-btn:hover {
+            background: #bfdbfe;
+        }
+        
+        .import-btn {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .import-btn:hover {
+            background: #bbf7d0;
+        }
+        
+        .hidden-input {
+            display: none;
+        }
     </style>
 </head>
-<body class="min-h-screen bg-stone-100 font-sans text-stone-800 pb-10">
+<body>
     <div id="app"></div>
 
     <script>
-        const STORAGE_KEY = 'wife_daily_app_data_v2';
+        const STORAGE_KEY = 'yuzu_schedule_v1';
         
         function loadData() {
             try {
                 const saved = localStorage.getItem(STORAGE_KEY);
                 return saved ? JSON.parse(saved) : {};
             } catch (e) {
+                console.error('Failed to load data:', e);
                 return {};
             }
         }
         
         function saveData(data) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (e) {
+                console.error('Failed to save data:', e);
+            }
         }
         
         function formatDate(date) {
@@ -59,7 +790,6 @@
         }
         
         function calculateMonthStats(date, data) {
-            const monthKey = formatMonthKey(date);
             const year = date.getFullYear();
             const month = date.getMonth();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -67,8 +797,8 @@
             let napCount = 0;
             let afterSchoolCount = 0;
             
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dayDate = new Date(year, month, day);
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayDate = new Date(year, month, i);
                 const dayStr = formatDate(dayDate);
                 const dayData = data[dayStr];
                 const currentDay = dayDate.getDay();
@@ -103,6 +833,47 @@
             return { napCount, afterSchoolCount };
         }
         
+        function exportData() {
+            const data = loadData();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `yuzu-schedule-${formatDate(new Date())}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        function importData(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    saveData(data);
+                    appData = data;
+                    render();
+                    alert('导入成功！');
+                } catch (err) {
+                    alert('导入失败：文件格式不正确');
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        function triggerImport() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    importData(e.target.files[0]);
+                }
+            };
+            input.click();
+        }
+        
         let appData = loadData();
         let selectedDate = new Date();
         let showCalendar = false;
@@ -119,8 +890,6 @@
             sections.push({
                 id: 'daily',
                 title: '日常必备',
-                color: 'bg-amber-50',
-                textColor: 'text-amber-800',
                 items: [
                     { id: 'alipay', text: '支付宝打卡，花88VIP 2块钱' },
                     { id: 'homework', text: '家长群里发每日作业' }
@@ -160,8 +929,6 @@
             sections.push({
                 id: 'school',
                 title: '学校教务',
-                color: 'bg-blue-50',
-                textColor: 'text-blue-800',
                 showRainToggle: currentDay === 2,
                 showAddNap: !hasNapWatch,
                 showAddAfterSchool: !hasAfterSchool,
@@ -171,8 +938,6 @@
             sections.push({
                 id: 'youzi',
                 title: '柚子晚间流水线',
-                color: 'bg-rose-50',
-                textColor: 'text-rose-800',
                 items: [
                     { id: 'yz_massage', text: '给柚子按摩' },
                     { id: 'yz_study', text: '学习打卡、收拾书包、安排读绘本' },
@@ -203,65 +968,61 @@
             let html = '';
             
             html += `
-            <div class="bg-white px-5 pt-8 pb-5 shadow-sm sticky top-0 z-10 rounded-b-3xl">
-                <div class="flex justify-between items-center mb-4">
-                    <h1 class="text-xl font-bold text-stone-800 flex items-center gap-2">
-                        老婆的专属清单
-                    </h1>
+            <div class="header">
+                <div class="header-top">
+                    <div class="header-title">老婆的专属清单</div>
                     ${!isToday ? `
-                    <button onclick="goToToday()" class="text-xs text-rose-600 font-semibold bg-rose-50 px-3 py-1.5 rounded-full">
-                        回到今天
-                    </button>
+                    <button class="btn-back-today" onclick="goToToday()">回到今天</button>
                     ` : ''}
                 </div>
                 
-                <div class="flex items-center justify-between bg-stone-50 rounded-2xl p-1 mb-4 border border-stone-100">
-                    <button onclick="changeDate(-1)" class="p-2 hover:bg-white rounded-xl text-stone-400 hover:text-stone-700">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="date-nav">
+                    <button class="date-btn" onclick="changeDate(-1)">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                         </svg>
                     </button>
-                    
-                    <div class="flex flex-col items-center justify-center flex-1 py-1">
-                        <button onclick="toggleCalendar()" class="flex items-center gap-1.5 bg-white px-4 py-2 rounded-xl shadow-sm border border-stone-100">
-                            <span class="text-[14px] font-bold text-stone-700">${dateStr}</span>
-                            <span class="text-[14px] font-bold text-stone-700 border-l border-stone-200 pl-1.5">${dayNames[selectedDate.getDay()]}</span>
+                    <div class="date-display">
+                        <button class="date-btn-main" onclick="toggleCalendar()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <span class="date-text">${dateStr}</span>
+                            <span class="date-weekday">${dayNames[selectedDate.getDay()]}</span>
                         </button>
                     </div>
-                    
-                    <button onclick="changeDate(1)" class="p-2 hover:bg-white rounded-xl text-stone-400 hover:text-stone-700">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button class="date-btn" onclick="changeDate(1)">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                         </svg>
                     </button>
                 </div>
                 
-                <div class="relative pt-1 mb-2">
-                    <div class="flex mb-2 items-center justify-between">
-                        <div class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full ${isToday ? 'text-rose-600 bg-rose-100' : 'text-stone-500 bg-stone-200'}">
+                <div class="progress-section">
+                    <div class="progress-header">
+                        <div class="progress-label ${isToday ? 'progress-label-today' : 'progress-label-other'}">
                             ${isToday ? '今日进度' : '当日进度'}
                         </div>
-                        <div class="text-right">
-                            <span class="text-xs font-bold inline-block ${isToday ? 'text-rose-600' : 'text-stone-500'}">
-                                ${completedTasksCount} / ${totalTasksCount}
-                            </span>
+                        <div class="progress-text ${isToday ? 'progress-text-today' : 'progress-text-other'}">
+                            ${completedTasksCount} / ${totalTasksCount}
                         </div>
                     </div>
-                    <div class="overflow-hidden h-2 mb-2 text-xs flex rounded-full bg-stone-100">
-                        <div style="width: ${progressPercent}%" class="h-full ${progressPercent === 100 ? 'bg-green-400' : (isToday ? 'bg-rose-400' : 'bg-stone-400')}"></div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar ${progressPercent === 100 ? 'progress-bar-done' : (isToday ? 'progress-bar-today' : 'progress-bar-other')}"
+                             style="width: ${progressPercent}%"></div>
                     </div>
                 </div>
                 
-                <div class="bg-purple-50 rounded-2xl p-3 border border-purple-100">
-                    <div class="text-xs font-bold text-purple-800 mb-2">本月统计</div>
-                    <div class="flex gap-4 text-sm">
-                        <div class="flex-1">
-                            <span class="text-purple-600">看午睡: </span>
-                            <span class="font-bold text-purple-800">${stats.napCount}次</span>
+                <div class="stats-card">
+                    <div class="stats-title">本月统计</div>
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <span class="stat-label">看午睡：</span>
+                            <span class="stat-value">${stats.napCount}次</span>
                         </div>
-                        <div class="flex-1">
-                            <span class="text-purple-600">延时课: </span>
-                            <span class="font-bold text-purple-800">${stats.afterSchoolCount}次</span>
+                        <div class="stat-item">
+                            <span class="stat-label">延时课：</span>
+                            <span class="stat-value">${stats.afterSchoolCount}次</span>
                         </div>
                     </div>
                 </div>
@@ -276,7 +1037,7 @@
                 
                 let calendarDays = '';
                 for (let i = 0; i < firstDay; i++) {
-                    calendarDays += '<div class="p-2 text-center text-transparent">0</div>';
+                    calendarDays += '<div class="calendar-day empty"><span class="calendar-day-number">0</span></div>';
                 }
                 for (let i = 1; i <= daysInMonth; i++) {
                     const cellDate = new Date(year, month, i);
@@ -284,38 +1045,37 @@
                     const isSelected = cellDateStr === dateStr;
                     const isCellToday = cellDateStr === todayStr;
                     calendarDays += `
-                    <button onclick="selectDate(${year}, ${month}, ${i})" class="p-2 w-full flex justify-center items-center rounded-full ${isSelected ? 'bg-rose-500 text-white font-bold' : isCellToday ? 'bg-rose-100 text-rose-600 font-bold' : 'hover:bg-stone-100 text-stone-700'}">
-                        <span class="w-8 h-8 flex items-center justify-center rounded-full">${i}</span>
+                    <button class="calendar-day ${isSelected ? 'selected' : ''} ${isCellToday ? 'today' : ''}"
+                            onclick="selectDate(${year}, ${month}, ${i})">
+                        <span class="calendar-day-number">${i}</span>
                     </button>
                     `;
                 }
                 
                 html += `
-                <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onclick="closeCalendar()">
-                    <div class="bg-white rounded-3xl shadow-xl w-full max-w-sm overflow-hidden" onclick="event.stopPropagation()">
-                        <div class="p-4 border-b border-stone-100 flex justify-between items-center bg-stone-50">
-                            <button onclick="changeCalendarMonth(-1)" class="p-2 hover:bg-stone-200 rounded-full text-stone-500">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="modal-overlay fade-in" onclick="closeCalendar()">
+                    <div class="modal-content zoom-in" onclick="event.stopPropagation()">
+                        <div class="calendar-header">
+                            <button class="calendar-nav-btn" onclick="changeCalendarMonth(-1)">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                                 </svg>
                             </button>
-                            <h3 class="font-bold text-stone-800">${year}年 ${month + 1}月</h3>
-                            <button onclick="changeCalendarMonth(1)" class="p-2 hover:bg-stone-200 rounded-full text-stone-500">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="calendar-title">${year}年 ${month + 1}月</div>
+                            <button class="calendar-nav-btn" onclick="changeCalendarMonth(1)">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                                 </svg>
                             </button>
                         </div>
-                        <div class="p-4">
-                            <div class="grid grid-cols-7 gap-1 mb-2">
-                                ${['日', '一', '二', '三', '四', '五', '六'].map(d => `<div class="text-center text-xs font-bold text-stone-400 py-1">${d}</div>`).join('')}
+                        <div class="calendar-body">
+                            <div class="calendar-weekdays">
+                                ${['日', '一', '二', '三', '四', '五', '六'].map(d => `<div class="calendar-weekday">${d}</div>`).join('')}
                             </div>
-                            <div class="grid grid-cols-7 gap-1">${calendarDays}</div>
+                            <div class="calendar-days">${calendarDays}</div>
                         </div>
-                        <div class="p-3 border-t border-stone-100 bg-stone-50 flex justify-end">
-                            <button onclick="closeCalendar()" class="px-4 py-2 text-sm font-bold text-stone-500 hover:bg-stone-200 rounded-xl">
-                                取消
-                            </button>
+                        <div class="calendar-footer">
+                            <button class="cancel-btn" onclick="closeCalendar()">取消</button>
                         </div>
                     </div>
                 </div>
@@ -324,99 +1084,112 @@
             
             if (showCelebration) {
                 html += `
-                <div class="fixed inset-0 pointer-events-none flex items-center justify-center z-50">
-                    <div class="bg-white/95 px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 animate-bounce border border-rose-100">
-                        <span class="font-bold text-rose-600">任务全搞定啦，老婆最棒！</span>
+                <div class="celebration">
+                    <div class="celebration-content animate-bounce">
+                        <span class="celebration-text">任务全搞定啦，老婆最棒！</span>
                     </div>
                 </div>
                 `;
             }
             
-            html += '<div class="p-4 space-y-5 max-w-md mx-auto mt-1">';
+            html += '<div class="main-content">';
             
             sections.forEach(section => {
                 let itemsHtml = '';
                 
                 if (section.showRainToggle) {
                     itemsHtml += `
-                <div class="mx-2 my-2 p-3 bg-blue-50 rounded-2xl flex items-center justify-between border border-blue-100">
-                    <div class="flex items-center gap-2 text-blue-800 text-[13px] font-bold">
-                        <span>今天下雨了吗？(触发延时)</span>
+                    <div class="rain-toggle">
+                        <div class="rain-label">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-10.233-.654.65.65 0 01-1.257 0 3.001 3.001 0 00-1.5 2.553"></path>
+                            </svg>
+                            <span>今天下雨了吗？(触发延时)</span>
+                        </div>
+                        <div class="toggle-switch ${isRaining ? 'toggle-on' : 'toggle-off'}" onclick="toggleRain()">
+                            <div class="toggle-dot ${isRaining ? 'toggle-dot-on' : 'toggle-dot-off'}"></div>
+                        </div>
                     </div>
-                    <button onclick="toggleRain()" class="relative inline-flex h-6 w-11 items-center rounded-full ${isRaining ? 'bg-blue-500' : 'bg-stone-300'}">
-                        <span class="inline-block h-4 w-4 transform rounded-full bg-white ${isRaining ? 'translate-x-6' : 'translate-x-1'}"></span>
-                    </button>
-                </div>
-                `;
+                    `;
                 }
                 
                 if (section.showAddNap) {
                     itemsHtml += `
-                <li>
-                    <button onclick="addNapWatch()" class="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-2xl border-2 border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 transition-colors">
-                        <span>+ 添加看午睡</span>
-                    </button>
-                </li>
-                `;
+                    <li class="task-item">
+                        <button class="add-btn" onclick="addNapWatch()">
+                            <span>+ 添加看午睡</span>
+                        </button>
+                    </li>
+                    `;
                 }
                 
                 if (section.showAddAfterSchool) {
                     itemsHtml += `
-                <li>
-                    <button onclick="addAfterSchool()" class="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-2xl border-2 border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 transition-colors">
-                        <span>+ 添加延时服务</span>
-                    </button>
-                </li>
-                `;
+                    <li class="task-item">
+                        <button class="add-btn" onclick="addAfterSchool()">
+                            <span>+ 添加延时服务</span>
+                        </button>
+                    </li>
+                    `;
                 }
                 
                 if (section.items.length === 0 && !section.showAddNap && !section.showAddAfterSchool) {
-                    itemsHtml += '<li class="p-4 text-center text-stone-400 text-sm font-medium">这一天该板块没有任务哦～</li>';
+                    itemsHtml += '<li class="empty-message">这一天该板块没有任务哦～</li>';
                 } else {
                     section.items.forEach(item => {
                         const isCompleted = !!tasks[item.id];
                         if (item.removable) {
                             itemsHtml += `
-                        <li class="relative">
-                            <button onclick="toggleTask('${item.id}')" class="w-full flex items-center gap-3.5 px-3 py-3.5 rounded-2xl text-left hover:bg-stone-50 ${isCompleted ? 'opacity-60 bg-stone-50' : ''}">
-                                <div class="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${isCompleted ? 'bg-rose-500 text-white' : 'border-2 border-stone-300'}">
-                                    ${isCompleted ? '✓' : ''}
-                                </div>
-                                <span class="flex-1 text-[14.5px] ${isCompleted ? 'text-stone-400 line-through' : 'text-stone-700 font-semibold'}">
-                                    ${item.text}
-                                </span>
-                            </button>
-                            <button onclick="removeTask('${item.id}')" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-red-500">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                            </button>
-                        </li>
-                        `;
+                            <li class="task-item">
+                                <button class="task-btn ${isCompleted ? 'completed' : ''}" onclick="toggleTask('${item.id}')">
+                                    <div class="task-checkbox ${isCompleted ? 'checked' : 'unchecked'}">
+                                        ${isCompleted ? '✓' : ''}
+                                    </div>
+                                    <span class="task-text ${isCompleted ? 'completed' : 'uncompleted'}">${item.text}</span>
+                                </button>
+                                <button class="task-remove-btn" onclick="removeTask('${item.id}')">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </li>
+                            `;
                         } else {
                             itemsHtml += `
-                        <li>
-                            <button onclick="toggleTask('${item.id}')" class="w-full flex items-center gap-3.5 px-3 py-3.5 rounded-2xl text-left hover:bg-stone-50 ${isCompleted ? 'opacity-60 bg-stone-50' : ''}">
-                                <div class="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${isCompleted ? 'bg-rose-500 text-white' : 'border-2 border-stone-300'}">
-                                    ${isCompleted ? '✓' : ''}
-                                </div>
-                                <span class="flex-1 text-[14.5px] ${isCompleted ? 'text-stone-400 line-through' : 'text-stone-700 font-semibold'}">
-                                    ${item.text}
-                                </span>
-                            </button>
-                        </li>
-                        `;
+                            <li class="task-item">
+                                <button class="task-btn ${isCompleted ? 'completed' : ''}" onclick="toggleTask('${item.id}')">
+                                    <div class="task-checkbox ${isCompleted ? 'checked' : 'unchecked'}">
+                                        ${isCompleted ? '✓' : ''}
+                                    </div>
+                                    <span class="task-text ${isCompleted ? 'completed' : 'uncompleted'}">${item.text}</span>
+                                </button>
+                            </li>
+                            `;
                         }
                     });
                 }
                 
+                let headerClass = '';
+                let titleClass = '';
+                if (section.id === 'daily') {
+                    headerClass = 'section-header-daily';
+                    titleClass = 'section-title-daily';
+                } else if (section.id === 'school') {
+                    headerClass = 'section-header-school';
+                    titleClass = 'section-title-school';
+                } else {
+                    headerClass = 'section-header-youzi';
+                    titleClass = 'section-title-youzi';
+                }
+                
                 html += `
-                <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-stone-100">
-                    <div class="px-5 py-3.5 ${section.color} flex items-center gap-3 border-b border-white">
-                        <h2 class="text-base font-bold ${section.textColor}">${section.title}</h2>
+                <div class="section-card">
+                    <div class="section-header ${headerClass}">
+                        <div class="section-icon"></div>
+                        <div class="section-title ${titleClass}">${section.title}</div>
                     </div>
-                    <div class="p-2">
-                        <ul class="space-y-1">
+                    <div class="section-content">
+                        <ul class="task-list">
                             ${itemsHtml}
                         </ul>
                     </div>
@@ -424,7 +1197,13 @@
                 `;
             });
             
-            html += '</div>';
+            html += `
+                <div class="export-import-section">
+                    <button class="export-btn" onclick="exportData()">📤 导出数据</button>
+                    <button class="import-btn" onclick="triggerImport()">📥 导入数据</button>
+                </div>
+            </div>
+            `;
             
             document.getElementById('app').innerHTML = html;
         }
@@ -525,6 +1304,16 @@
             saveData(appData);
             render();
         };
+        
+        window.exportData = exportData;
+        window.triggerImport = triggerImport;
+        
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => {
+                });
+            });
+        }
         
         render();
     </script>
