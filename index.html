@@ -338,6 +338,14 @@
             color: #9f1239;
         }
         
+        .section-header-custom {
+            background: #f0fdf4;
+        }
+        
+        .section-title-custom {
+            color: #166534;
+        }
+        
         .section-content {
             padding: 8px;
         }
@@ -757,11 +765,42 @@
 
     <script>
         const STORAGE_KEY = 'yuzu_schedule_v1';
+        // 维护所有历史版本的 KEY，最新版本放在最前面
+        const HISTORY_STORAGE_KEYS = [
+            'yuzu_schedule_v1',
+            'wife_daily_app_data_v2',
+            'wife_daily_app_data'
+        ];
         
         function loadData() {
             try {
+                // 先尝试当前版本
                 const saved = localStorage.getItem(STORAGE_KEY);
-                return saved ? JSON.parse(saved) : {};
+                if (saved) {
+                    return JSON.parse(saved);
+                }
+                
+                // 当前版本没有数据，查找旧版本
+                for (const oldKey of HISTORY_STORAGE_KEYS) {
+                    if (oldKey === STORAGE_KEY) continue; // 跳过当前版本
+                    
+                    const oldSaved = localStorage.getItem(oldKey);
+                    if (oldSaved) {
+                        try {
+                            const oldData = JSON.parse(oldSaved);
+                            // 迁移到当前版本
+                            localStorage.setItem(STORAGE_KEY, JSON.stringify(oldData));
+                            console.log(`Data migrated from ${oldKey} to ${STORAGE_KEY}`);
+                            return oldData;
+                        } catch (e) {
+                            console.error(`Failed to migrate data from ${oldKey}:`, e);
+                            continue; // 这个旧版本数据损坏，尝试下一个
+                        }
+                    }
+                }
+                
+                // 没有找到任何数据
+                return {};
             } catch (e) {
                 console.error('Failed to load data:', e);
                 return {};
@@ -879,6 +918,7 @@
         let showCalendar = false;
         let calendarMonth = new Date(selectedDate);
         let showCelebration = false;
+        let showCustomTaskModal = false;
         
         const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
         
@@ -894,6 +934,20 @@
                     { id: 'alipay', text: '支付宝打卡，花88VIP 2块钱' },
                     { id: 'homework', text: '家长群里发每日作业' }
                 ]
+            });
+            
+            // 📝 临时加办
+            const customTasks = dayData?.customTasks || [];
+            sections.push({
+                id: 'custom',
+                title: '📝 临时加办',
+                items: customTasks.map(task => ({
+                    id: task.id,
+                    text: task.text,
+                    removable: true,
+                    isCustom: true
+                })),
+                isCustomSection: true
             });
             
             const schoolItems = [];
@@ -953,7 +1007,7 @@
             const dateStr = formatDate(selectedDate);
             const todayStr = formatDate(new Date());
             const isToday = dateStr === todayStr;
-            const dayData = appData[dateStr] || { tasks: {}, isRaining: false };
+            const dayData = appData[dateStr] || { tasks: {}, isRaining: false, customTasks: [] };
             const tasks = dayData.tasks || {};
             const isRaining = dayData.isRaining || false;
             const sections = getSections(dateStr, isRaining, dayData);
@@ -1092,6 +1146,27 @@
                 `;
             }
             
+            if (showCustomTaskModal) {
+                html += `
+                <div class="modal-overlay fade-in" onclick="closeCustomTaskModal()">
+                    <div class="modal-content zoom-in" onclick="event.stopPropagation()">
+                        <div class="calendar-header">
+                            <div class="calendar-title">添加临时待办</div>
+                        </div>
+                        <div class="calendar-body">
+                            <input type="text" id="customTaskInput" placeholder="请输入待办内容..." 
+                                   style="width: 100%; padding: 12px; border: 2px solid #e7e5e4; border-radius: 12px; font-size: 16px; outline: none;">
+                        </div>
+                        <div class="calendar-footer" style="gap: 8px; display: flex; justify-content: flex-end;">
+                            <button class="cancel-btn" onclick="closeCustomTaskModal()">取消</button>
+                            <button class="cancel-btn" onclick="addCustomTask()" 
+                                    style="background-color: #fff1f2; color: #e11d48;">确定</button>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
+            
             html += '<div class="main-content">';
             
             sections.forEach(section => {
@@ -1133,7 +1208,18 @@
                     `;
                 }
                 
-                if (section.items.length === 0 && !section.showAddNap && !section.showAddAfterSchool) {
+                // 自定义任务 section 添加新待办按钮
+                if (section.isCustomSection) {
+                    itemsHtml += `
+                    <li class="task-item">
+                        <button class="add-btn" onclick="openCustomTaskModal()">
+                            <span>+ 添加新待办</span>
+                        </button>
+                    </li>
+                    `;
+                }
+                
+                if (section.items.length === 0 && !section.showAddNap && !section.showAddAfterSchool && !section.isCustomSection) {
                     itemsHtml += '<li class="empty-message">这一天该板块没有任务哦～</li>';
                 } else {
                     section.items.forEach(item => {
@@ -1177,6 +1263,9 @@
                 } else if (section.id === 'school') {
                     headerClass = 'section-header-school';
                     titleClass = 'section-title-school';
+                } else if (section.id === 'custom') {
+                    headerClass = 'section-header-custom';
+                    titleClass = 'section-title-custom';
                 } else {
                     headerClass = 'section-header-youzi';
                     titleClass = 'section-title-youzi';
@@ -1242,7 +1331,7 @@
         
         window.toggleTask = function(taskId) {
             const dateStr = formatDate(selectedDate);
-            const dayData = appData[dateStr] || { tasks: {}, isRaining: false };
+            const dayData = appData[dateStr] || { tasks: {}, isRaining: false, customTasks: [] };
             const isCurrentlyCompleted = dayData.tasks[taskId];
             const newTasks = { ...dayData.tasks, [taskId]: !isCurrentlyCompleted };
             
@@ -1289,7 +1378,7 @@
         
         window.removeTask = function(taskId) {
             const dateStr = formatDate(selectedDate);
-            const dayData = appData[dateStr] || { tasks: {}, isRaining: false };
+            const dayData = appData[dateStr] || { tasks: {}, isRaining: false, customTasks: [] };
             const newTasks = { ...dayData.tasks };
             delete newTasks[taskId];
             
@@ -1297,11 +1386,55 @@
                 appData[dateStr] = { ...dayData, tasks: newTasks, hasNapWatch: false };
             } else if (taskId === 'after_school') {
                 appData[dateStr] = { ...dayData, tasks: newTasks, hasAfterSchool: false };
+            } else if (taskId.startsWith('custom_')) {
+                // 删除自定义任务
+                const newCustomTasks = (dayData.customTasks || []).filter(t => t.id !== taskId);
+                appData[dateStr] = { ...dayData, tasks: newTasks, customTasks: newCustomTasks };
             } else {
                 appData[dateStr] = { ...dayData, tasks: newTasks };
             }
             
             saveData(appData);
+            render();
+        };
+        
+        window.openCustomTaskModal = function() {
+            showCustomTaskModal = true;
+            render();
+            // 打开弹窗后自动聚焦输入框
+            setTimeout(() => {
+                const input = document.getElementById('customTaskInput');
+                if (input) input.focus();
+            }, 100);
+        };
+        
+        window.closeCustomTaskModal = function() {
+            showCustomTaskModal = false;
+            render();
+        };
+        
+        window.addCustomTask = function() {
+            const input = document.getElementById('customTaskInput');
+            const text = input?.value?.trim();
+            if (!text) {
+                alert('请输入待办内容！');
+                return;
+            }
+            
+            const dateStr = formatDate(selectedDate);
+            const dayData = appData[dateStr] || { tasks: {}, isRaining: false, customTasks: [] };
+            const newCustomTask = {
+                id: 'custom_' + Date.now(),
+                text: text
+            };
+            
+            appData[dateStr] = {
+                ...dayData,
+                customTasks: [...(dayData.customTasks || []), newCustomTask]
+            };
+            
+            saveData(appData);
+            showCustomTaskModal = false;
             render();
         };
         
